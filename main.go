@@ -6,22 +6,23 @@ import (
 	"net/http"
 )
 
-type TemplateData struct {
-	Name string
-}
-
 type Todo struct {
 	Task      string
 	Completed bool
 }
 
+type templateData struct {
+	Name string
+}
+
+var todos []Todo
+
 func viewHandler(writer http.ResponseWriter, request *http.Request) {
 	html, err := template.ParseFiles("view.html")
-
+	data := templateData{Name: "Jimmy"}
 	if err != nil {
 		log.Fatal(err)
 	}
-	data := TemplateData{Name: "Jimmy"}
 	err = html.Execute(writer, data)
 
 	if err != nil {
@@ -30,20 +31,15 @@ func viewHandler(writer http.ResponseWriter, request *http.Request) {
 }
 
 func todoCreateHandler(writer http.ResponseWriter, request *http.Request) {
-	html, err := template.ParseFiles("view.html")
-
-	if err != nil {
-		log.Fatal(err)
-	}
-	data := TemplateData{Name: "Jimmy"}
-	err = html.Execute(writer, data)
-
-	if err != nil {
-		log.Fatal(err)
-	}
+	task := request.FormValue("task")
+	println(task)
+	todos[0] = Todo{Task: task, Completed: false}
+	println(todos[0].Task)
 }
 
 func main() {
+	todos = make([]Todo, 5)
+
 	http.HandleFunc("/", viewHandler)
 	http.HandleFunc("/todo/create", todoCreateHandler)
 
