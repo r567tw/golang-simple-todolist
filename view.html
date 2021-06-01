@@ -7,11 +7,16 @@
     <title>Document</title>
 </head>
 <body>
-    <h1>Hello {{.Name}} </h1>
+    <h1>Golang Simple Todo list</h1>
 
     <form action="/todo/create" method="post">
         <input type="text" name="task">
         <button>Create Todo</button>
     </form>
+    <ul>
+        {{range .Todos}}
+            <li><p>{{.}}</p></li>
+        {{end}}
+    </ul>
 </body>
 </html>

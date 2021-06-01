@@ -1,29 +1,49 @@
 package main
 
 import (
+	"bufio"
 	"html/template"
 	"log"
 	"net/http"
+	"os"
+	"fmt"
 )
 
-type Todo struct {
-	Task      string
-	Completed bool
+type TodoList struct {
+	Todos []string
 }
 
-type templateData struct {
-	Name string
-}
+// type Todo struct {
+// 	Task string
+// 	Completed bool
+// }
 
-var todos []Todo
+func getTodos(fileName string) []string {
+	var todos []string
+	file, err := os.Open(fileName)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		todos = append(todos, scanner.Text())
+	}
+	return todos
+}
 
 func viewHandler(writer http.ResponseWriter, request *http.Request) {
 	html, err := template.ParseFiles("view.html")
-	data := templateData{Name: "Jimmy"}
+	todos := getTodos("todolist.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = html.Execute(writer, data)
+
+	todolist := TodoList{
+		Todos:  todos,
+	}
+
+	err = html.Execute(writer, todolist)
 
 	if err != nil {
 		log.Fatal(err)
@@ -32,13 +52,14 @@ func viewHandler(writer http.ResponseWriter, request *http.Request) {
 
 func todoCreateHandler(writer http.ResponseWriter, request *http.Request) {
 	task := request.FormValue("task")
-	println(task)
-	todos[0] = Todo{Task: task, Completed: false}
-	println(todos[0].Task)
+
+	file, _ := os.OpenFile("todolist.txt", os.O_WRONLY | os.O_APPEND | os.O_CREATE , os.FileMode(0600))
+	fmt.Fprintln(file, task)
+	defer file.Close()
+	http.Redirect(writer, request, "/", http.StatusFound)
 }
 
 func main() {
-	todos = make([]Todo, 5)
 
 	http.HandleFunc("/", viewHandler)
 	http.HandleFunc("/todo/create", todoCreateHandler)
